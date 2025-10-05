@@ -7,27 +7,58 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#050506;--accent:#45a29e;--muted:#9aa0a6;}
-body{margin:0;font-family:Inter,sans-serif;background:#050506;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;}
-.panel{background:#0b0c10;padding:20px;border-radius:12px;width:340px;text-align:center;position:relative;}
-h2{font-family:Orbitron,sans-serif;margin-bottom:16px;color:#e6f7f5;}
-.boost-btn{width:100%;padding:12px;margin:8px 0;border:none;border-radius:10px;background:#1f2833;color:#fff;cursor:pointer;font-weight:700;transition:.3s, box-shadow .3s;}
+body{margin:0;font-family:Inter,sans-serif;background:#050506;color:#fff;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh;position:relative;}
+canvas#bgCanvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+.panel{
+  background:rgba(11,12,16,0.95);
+  padding:35px;
+  border-radius:20px;
+  width:420px;
+  text-align:center;
+  position:relative;
+  border:2px solid #fff;
+  box-shadow:0 0 50px rgba(255,255,255,0.05);
+}
+h2{font-family:Orbitron,sans-serif;margin-bottom:24px;color:#e6f7f5;text-shadow:0 0 8px rgba(255,255,255,0.2);}
+.boost-btn{
+  width:100%;
+  padding:14px;
+  margin:12px 0;
+  border:none;
+  border-radius:12px;
+  background:#1f2833;
+  color:#fff;
+  cursor:pointer;
+  font-weight:700;
+  font-size:16px;
+  transition:.3s, box-shadow .3s;
+}
 .boost-btn:hover{background:#45a29e;}
-.boost-btn[disabled]{opacity:0.5;cursor:not-allowed;}
-input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #333;background:rgba(255,255,255,0.03);color:#fff;}
-.btn-submit{background:#45a29e;margin-top:8px;cursor:pointer;}
+.boost-btn[disabled]{opacity:0.3;cursor:not-allowed;background:#111418;}
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border-radius:10px;
+  border:1px solid #fff;
+  background:rgba(255,255,255,0.05);
+  color:#fff;
+}
+.btn-submit{background:#45a29e;margin-top:10px;cursor:pointer;border:none;border-radius:10px;font-weight:700;}
 @keyframes glowEffect {
-  0% { box-shadow: 0 0 6px #45a29e, 0 0 12px rgba(69,162,158,0.2); transform: scale(1); }
-  50% { box-shadow: 0 0 20px #45a29e, 0 0 40px rgba(69,162,158,0.4); transform: scale(1.05); }
-  100% { box-shadow: 0 0 6px #45a29e, 0 0 12px rgba(69,162,158,0.2); transform: scale(1); }
+  0% { box-shadow: 0 0 6px #fff,0 0 12px rgba(255,255,255,0.2); transform: scale(1);}
+  50%{ box-shadow:0 0 20px #fff,0 0 40px rgba(255,255,255,0.4); transform: scale(1.05);}
+  100%{ box-shadow:0 0 6px #fff,0 0 12px rgba(255,255,255,0.2); transform: scale(1);}
 }
 .glow { animation: glowEffect 1s ease-in-out; }
 </style>
 </head>
 <body>
 
+<canvas id="bgCanvas"></canvas>
+
 <div class="panel">
   <h2>Boost Selection</h2>
-
   <div id="boostList">
     <button class="boost-btn" data-boost="2">Starter Boost — 2x</button>
     <button class="boost-btn" data-boost="5" disabled>Power Boost — 5x</button>
@@ -48,6 +79,7 @@ input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:1px solid #3
 </audio>
 
 <script>
+// ================== Progressive Boost Logic ==================
 const boostButtons = document.querySelectorAll('.boost-btn[data-boost]');
 const emailSection = document.getElementById('emailSection');
 const sendBtn = document.getElementById('sendWebhook');
@@ -56,22 +88,16 @@ const statusMsg = document.getElementById('statusMsg');
 let selectedBoost = null;
 let claimedBoosts = JSON.parse(localStorage.getItem('claimedBoosts') || '[]');
 
-// Update button unlocks based on progressive claim
-function refreshBoosts() {
+function refreshBoosts(){
   boostButtons.forEach(btn=>{
     const boostVal = parseInt(btn.dataset.boost);
-    if(boostVal === 2){
-      btn.disabled = claimedBoosts.includes(2);
-    } else if(boostVal === 5){
-      btn.disabled = !claimedBoosts.includes(2) || claimedBoosts.includes(5);
-    } else if(boostVal === 15){
-      btn.disabled = !claimedBoosts.includes(5) || claimedBoosts.includes(15);
-    }
+    if(boostVal === 2){ btn.disabled = claimedBoosts.includes(2); }
+    else if(boostVal === 5){ btn.disabled = !claimedBoosts.includes(2) || claimedBoosts.includes(5); }
+    else if(boostVal === 15){ btn.disabled = !claimedBoosts.includes(5) || claimedBoosts.includes(15); }
     btn.textContent = claimedBoosts.includes(boostVal) ? `CLAIMED — ${boostVal}x` : btn.textContent;
   });
 }
 
-// Glow animation effect
 function animateGlow(btn){
   btn.classList.add('glow');
   setTimeout(()=>btn.classList.remove('glow'),1000);
@@ -95,7 +121,6 @@ sendBtn.addEventListener('click',()=>{
     return;
   }
 
-  // Store progressive claim
   if(!claimedBoosts.includes(selectedBoost)){
     claimedBoosts.push(selectedBoost);
     localStorage.setItem('claimedBoosts', JSON.stringify(claimedBoosts));
@@ -120,16 +145,81 @@ sendBtn.addEventListener('click',()=>{
         ]
       }]
     })
-  }).then(()=>console.log('Webhook sent')).catch(console.error);
+  }).catch(console.error);
 
-  // Glow animation on all newly unlocked boosts
   boostButtons.forEach(btn=>{
-    const boostVal = parseInt(btn.dataset.boost);
     if(!btn.disabled) animateGlow(btn);
   });
 });
 
 refreshBoosts();
+
+// ================== Background particle canvas ==================
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+for(let i=0;i<80;i++){
+  particles.push({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    r: Math.random()*2+1,
+    alpha: Math.random()*0.5+0.2
+  });
+}
+
+function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,255,255,${p.alpha})`;
+    ctx.fill();
+  });
+}
+
+function animateParticles(){
+  particles.forEach(p=>{
+    p.y -= 0.1;
+    if(p.y<0) p.y = canvas.height;
+  });
+  drawParticles();
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// ================== Mouse/finger trail ==================
+let trail = [];
+function addTrail(x,y){ trail.push({x,y,alpha:1}); }
+
+function drawTrail(){
+  for(let i=0;i<trail.length-1;i++){
+    const t = trail[i];
+    const next = trail[i+1];
+    ctx.strokeStyle=`rgba(255,255,255,${t.alpha})`;
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(t.x,t.y);
+    ctx.lineTo(next.x,next.y);
+    ctx.stroke();
+    t.alpha -= 0.02;
+    if(t.alpha<=0){ trail.splice(i,1); i--; }
+  }
+}
+function animateTrail(){ drawTrail(); requestAnimationFrame(animateTrail); }
+animateTrail();
+
+document.addEventListener('mousemove', e=>{ addTrail(e.clientX,e.clientY); });
+document.addEventListener('touchmove', e=>{
+  for(let touch of e.touches){ addTrail(touch.clientX,touch.clientY); }
+});
+
+window.addEventListener('resize', ()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 
 </body>
