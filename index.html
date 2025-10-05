@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BoostSync — Free Boosts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050506;
+    --glass: rgba(255,255,255,0.03);
+    --card:#0b0c10;
+    --accent:#45a29e;
+    --muted: #9aa0a6;
+    --glass-2: rgba(255,255,255,0.02);
+    --neon: 0 0 18px rgba(69,162,158,0.12), 0 0 6px rgba(69,162,158,0.06);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#020203 0%, #06070a 60%); font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+  .wrap{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:36px;
+    background-image: radial-gradient( circle at 20% 10%, rgba(69,162,158,0.03), transparent 8%),
+                      radial-gradient( circle at 80% 70%, rgba(99,102,241,0.02), transparent 12%);
+  }
+
+  .panel{
+    width:100%; max-width:980px; border-radius:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.04);
+    padding:28px;
+    box-shadow: 0 10px 30px rgba(2,3,4,0.6);
+    display:grid; grid-template-columns: 1fr 380px; gap:24px; align-items:start;
+    position:relative; overflow:hidden;
+  }
+
+  /* Left: content */
+  .left {
+    padding:18px;
+  }
+  .title { font-family: 'Orbitron', sans-serif; color:#e6f7f5; font-size:28px; margin:6px 0 8px; letter-spacing:0.6px; text-shadow: 0 0 12px rgba(69,162,158,0.08);}
+  .subtitle { color:var(--muted); margin:0 0 18px; font-size:13px;}
+  .description { color:#c8d6d4; opacity:0.95; font-size:14px; line-height:1.5; margin-bottom:18px;}
+
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.03);
+    border-radius:12px; padding:14px; margin-bottom:14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .card .icon {
+    width:56px; height:56px; border-radius:10px;
+    background: linear-gradient(180deg,#0f1113,#071011); display:flex; align-items:center; justify-content:center;
+    box-shadow: var(--neon);
+  }
+  .card .meta { flex:1; }
+  .muted { color:var(--muted); font-size:13px; }
+  .small { font-size:12px; color:#bcd7d3; }
+
+  /* Right: boost menu */
+  .right {
+    padding:18px;
+  }
+  .menu {
+    background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0.008));
+    border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.03);
+  }
+  .menu h3 { font-family:Orbitron, sans-serif; color:#e6f7f5; margin:0 0 10px; font-size:18px;}
+  .boost-list { display:flex; flex-direction:column; gap:12px; margin-top:10px;}
+  .boost {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px; border-radius:10px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+    border:1px solid rgba(255,255,255,0.025);
+  }
+  .boost .left {
+    display:flex; gap:12px; align-items:center;
+  }
+  .boost .name { font-weight:600; color:#e9f8f7; letter-spacing:0.3px;}
+  .boost .desc { color:var(--muted); font-size:13px;}
+  .btn {
+    --pad:12px 18px; border-radius:10px; padding:var(--pad); font-weight:700; letter-spacing:0.6px;
+    cursor:pointer; border:none; background:linear-gradient(90deg,#1f2833,var(--accent)); color:white; transition:transform .12s ease, opacity .12s;
+    box-shadow: 0 6px 18px rgba(69,162,158,0.08);
+  }
+  .btn:hover:not(:disabled){ transform:translateY(-3px); }
+  .btn[disabled] {
+    opacity:0.45; cursor:not-allowed; transform:none; box-shadow:none;
+    background: linear-gradient(90deg,#121214,#0e0e0f);
+    color:#98a0a5;
+  }
+
+  .locked {
+    display:inline-flex; align-items:center; gap:8px; color:var(--muted); font-size:13px;
+  }
+
+  .foot {
+    margin-top:14px; font-size:13px; color:var(--muted);
+  }
+
+  /* Modal */
+  .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(2,3,4,0.6); z-index:60; }
+  .modal { width:400px; max-width:92%; background:linear-gradient(180deg, #061218, #040405); border-radius:12px; padding:18px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 20px 60px rgba(2,3,4,0.6); color:#e6f7f5; }
+  .modal h4 { margin:0 0 8px; font-family:Orbitron, sans-serif;}
+  .field { margin-bottom:10px; }
+  input[type="email"]{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.015); color:#e6f7f5; outline:none; }
+  input[type="text"]{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.015); color:#e6f7f5; outline:none; }
+  .row { display:flex; gap:8px; }
+  .hint { color:var(--muted); font-size:13px; margin-top:6px; }
+
+  /* small responsive */
+  @media (max-width:880px){
+    .panel{ grid-template-columns: 1fr; }
+    .right{ order:-1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel" role="main" aria-labelledby="title">
+    <div class="left">
+      <div class="title" id="title">BoostSync — Free Boosts</div>
+      <div class="subtitle">Dark-space rewards • free • progressive claim</div>
+      <p class="description">
+        Claim free boost packages for your Discord account. This is a demo frontend:
+        the verification is simulated locally. For production, replace the simulated
+        email send with a secure server-side email verification and duplicate-check logic.
+      </p>
+
+      <div class="card">
+        <div class="icon">⭐</div>
+        <div class="meta">
+          <div class="muted">Instant Claim</div>
+          <div class="small">Click any available boost to verify your email and claim it instantly.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icon">🔒</div>
+        <div class="meta">
+          <div class="muted">Progressive Unlocks</div>
+          <div class="small">2 → 5 → 15 boosts. Complete earlier claims to unlock later ones.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="icon">💡</div>
+        <div class="meta">
+          <div class="muted">Privacy-friendly Demo</div>
+          <div class="small">This demo stores claim status in your browser only (localStorage).</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right">
+      <div class="menu" aria-live="polite">
+        <h3>Choose your Boost</h3>
+
+        <div class="boost-list" id="boostList">
+
+          <!-- BOOST ITEM: 2 -->
+          <div class="boost" data-id="2">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,#071014,#0f1316);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Orbitron;color:#e9f8f7">2x</div>
+              <div>
+                <div class="name">Starter Boost — 2 Boosts</div>
+                <div class="desc">Perfect for quick power-ups.</div>
+              </div>
+            </div>
+            <div>
+              <button class="btn claim-btn" data-boost="2">CLAIM 2</button>
+            </div>
+          </div>
+
+          <!-- BOOST ITEM: 5 -->
+          <div class="boost" data-id="5">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,#071014,#0f1316);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Orbitron;color:#e9f8f7">5x</div>
+              <div>
+                <div class="name">Power Boost — 5 Boosts</div>
+                <div class="desc">More punch; unlocks after Starter.</div>
+              </div>
+            </div>
+            <div>
+              <button class="btn claim-btn" data-boost="5" disabled>LOCKED</button>
+            </div>
+          </div>
+
+          <!-- BOOST ITEM: 15 -->
+          <div class="boost" data-id="15">
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,#071014,#0f1316);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Orbitron;color:#e9f8f7">15x</div>
+              <div>
+                <div class="name">Ultra Boost — 15 Boosts</div>
+                <div class="desc">Max package. Unlocks after Power Boost.</div>
+              </div>
+            </div>
+            <div>
+              <button class="btn claim-btn" data-boost="15" disabled>LOCKED</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="foot">
+          <div id="statusMsg">Status: Ready</div>
+          <div style="margin-top:8px" class="hint">Note: this demo simulates verification locally. Replace simulated verification with a secure backend for real use.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal for email verification -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal" role="document" aria-labelledby="modalTitle">
+    <h4 id="modalTitle">Verify email to claim</h4>
+    <p class="hint" id="modalHint">Enter your email and click "Send Code". This demo will display a code on screen (simulates email).</p>
+
+    <div class="field">
+      <label class="muted">Email</label>
+      <input id="emailInput" type="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+
+    <div class="row" style="margin-bottom:8px;">
+      <input id="codeInput" type="text" placeholder="Enter verification code" />
+      <button class="btn" id="verifyBtn">Verify</button>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+      <button class="btn" id="sendCodeBtn">Send Code</button>
+      <div style="margin-left:auto;color:var(--muted);font-size:13px" id="tries">Tries: 0</div>
+    </div>
+
+    <div class="hint" id="demoCode" style="margin-top:10px; color:var(--muted); font-size:13px; display:none;"></div>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <button id="closeModal" style="background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:var(--muted)">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  BoostSync Demo Script
+  - Progressive unlock: 2 -> 5 -> 15
+  - Simulated email verification via on-page code (no real email sent)
+  - Duplicate prevention: stores claimed boosts in localStorage per-email (demo only)
+  - For real verification, replace the simulated "send code" & verification with server-side email sending and backend duplicate-check logic.
+*/
+
+const claimButtons = document.querySelectorAll('.claim-btn');
+const modal = document.getElementById('modal');
+const sendCodeBtn = document.getElementById('sendCodeBtn');
+const verifyBtn = document.getElementById('verifyBtn');
+const closeModal = document.getElementById('closeModal');
+const emailInput = document.getElementById('emailInput');
+const codeInput = document.getElementById('codeInput');
+const demoCodeEl = document.getElementById('demoCode');
+const triesEl = document.getElementById('tries');
+const statusMsg = document.getElementById('statusMsg');
+
+let currentTargetBoost = null;
+let currentCode = null;
+let tries = 0;
+
+// localStorage keys
+const LS_CLAIMED = 'boostsync_claimed_by_email_v1'; // stores an object { email: [2,5] }
+
+function readClaims() {
+  try {
+    const raw = localStorage.getItem(LS_CLAIMED);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) {
+    return {};
+  }
+}
+function saveClaims(obj) {
+  localStorage.setItem(LS_CLAIMED, JSON.stringify(obj));
+}
+
+// Update unlock states on page load or after claims
+function refreshState() {
+  const claims = readClaims();
+  // We only enable next button if previous has been claimed by ANY email in this browser (demo logic)
+  // For demo demo-only: treat localStorage as authoritative for unlocking
+  const claimedFlat = new Set([].concat(...Object.values(claims)));
+  // If any email claimed 2 -> unlock 5, etc.
+  const has2 = claimedFlat.has(2);
+  const has5 = claimedFlat.has(5);
+
+  document.querySelectorAll('.boost').forEach(b => {
+    const id = parseInt(b.dataset.id,10);
+    const btn = b.querySelector('.claim-btn');
+    if (id === 2) {
+      btn.disabled = false;
+      btn.textContent = hasClaimedByEmail(id, null) ? 'CLAIMED' : (btn.disabled ? 'LOCKED':'CLAIM 2');
+      if (hasClaimedByEmail(id,null)) btn.disabled = true;
+    } else if (id === 5) {
+      if (!has2) { btn.disabled = true; btn.textContent = 'LOCKED'; }
+      else {
+        btn.disabled = hasClaimedByEmail(5,null);
+        btn.textContent = hasClaimedByEmail(5,null) ? 'CLAIMED' : 'CLAIM 5';
+      }
+    } else if (id === 15) {
+      if (!has5) { btn.disabled = true; btn.textContent = 'LOCKED'; }
+      else {
+        btn.disabled = hasClaimedByEmail(15,null);
+        btn.textContent = hasClaimedByEmail(15,null) ? 'CLAIMED' : 'CLAIM 15';
+      }
+    }
+  });
+}
+
+/* Utility: check whether ANY stored email in localStorage has claimed an id.
+   If emailArg is null -> check across any email (used for unlocking logic).
+   If emailArg is a string -> check for that email specifically (used for duplicate prevention). */
+function hasClaimedByEmail(boostId, emailArg) {
+  const claims = readClaims();
+  if (!emailArg) {
+    // across any email
+    return Object.values(claims).some(arr => arr && arr.includes(boostId));
+  } else {
+    const arr = claims[emailArg] || [];
+    return arr.includes(boostId);
+  }
+}
+
+// click handlers for claim buttons
+claimButtons.forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    const b = e.currentTarget;
+    const boost = parseInt(b.dataset.boost,10);
+    currentTargetBoost = boost;
+    openModal();
+  });
+});
+
+function openModal() {
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden','false');
+  demoCodeEl.style.display = 'none';
+  codeInput.value = '';
+  sendCodeBtn.disabled = false;
+  tries = 0;
+  triesEl.textContent = 'Tries: 0';
+  statusMsg.textContent = 'Status: Verifying...';
+}
+
+// Simulated send code
+sendCodeBtn.addEventListener('click', ()=>{
+  const email = (emailInput.value || '').trim().toLowerCase();
+  if (!validateEmail(email)) {
+    alert('Please enter a valid email address (demo).');
+    return;
+  }
+
+  // Demo duplicate check (client-side): if this email already claimed currentTargetBoost -> deny
+  if (hasClaimedByEmail(currentTargetBoost, email)) {
+    alert('This email already claimed this boost. (Demo duplicate check)');
+    return;
+  }
+
+  // Generate a random 6-digit code
+  currentCode = (Math.floor(Math.random()*900000)+100000).toString();
+  demoCodeEl.style.display = 'block';
+  demoCodeEl.innerText = 'Demo verification code (in a real system this would be emailed): ' + currentCode;
+  // In a real implementation, you would POST to your backend which sends the email.
+  // Example (not active in this demo):
+  // fetch('/api/send-code',{method:'POST', body: JSON.stringify({email, code:currentCode, boost:currentTargetBoost})})
+  sendCodeBtn.disabled = true;
+  statusMsg.textContent = 'Status: Code sent (demo). Enter code to verify.';
+});
+
+// Verify code
+verifyBtn.addEventListener('click', ()=>{
+  const entered = (codeInput.value||'').trim();
+  const email = (emailInput.value || '').trim().toLowerCase();
+  tries++;
+  triesEl.textContent = 'Tries: ' + tries;
+
+  if (!validateEmail(email)) {
+    alert('Please enter a valid email first.');
+    return;
+  }
+  if (!currentCode) {
+    alert('Please send a code first (demo).');
+    return;
+  }
+  if (entered === currentCode) {
+    // success -> register claim in localStorage under email
+    const claims = readClaims();
+    if (!claims[email]) claims[email] = [];
+    // prevent duplicate for same boost
+    if (!claims[email].includes(currentTargetBoost)) {
+      claims[email].push(currentTargetBoost);
+    }
+    saveClaims(claims);
+
+    // Update UI & modal
+    statusMsg.textContent = `Status: Successfully claimed ${currentTargetBoost} boosts for ${email}.`;
+    alert(`Success! You claimed ${currentTargetBoost} boosts (demo).`);
+    closeModalFunc();
+    // refresh unlock states
+    setTimeout(refreshState, 150);
+  } else {
+    alert('Incorrect code (demo). Try again.');
+    if (tries >= 5) {
+      alert('Too many tries. Please resend the code.');
+      sendCodeBtn.disabled = false;
+      currentCode = null;
+      demoCodeEl.style.display = 'none';
+    }
+  }
+});
+
+closeModal.addEventListener('click', closeModalFunc);
+
+function closeModalFunc() {
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden','true');
+  currentCode = null;
+  currentTargetBoost = null;
+  emailInput.value = '';
+  codeInput.value = '';
+  demoCodeEl.style.display = 'none';
+  statusMsg.textContent = 'Status: Ready';
+}
+
+// basic email validation (demo)
+function validateEmail(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+// initial refresh
+refreshState();
+
+/* ======= Optional: simulated "admin reset" for testing (dev only) =======
+   Uncomment below to wipe stored claims on page load for testing:
+*/
+// localStorage.removeItem(LS_CLAIMED);
+
+</script>
+</body>
+</html>
