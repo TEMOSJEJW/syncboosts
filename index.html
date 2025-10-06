@@ -27,26 +27,35 @@ body {
 
 .panel {
   background: var(--panel);
-  width: 480px;
-  padding: 40px;
+  width: 500px;
+  padding: 45px;
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
   border: 1.5px solid rgba(255,255,255,0.1);
-  animation: fadeIn 1.4s ease;
+  animation: fadeIn 1.2s ease;
 }
 
 @keyframes fadeIn {
-  from {opacity: 0; transform: scale(0.95);}
+  from {opacity: 0; transform: scale(0.96);}
   to {opacity: 1; transform: scale(1);}
 }
 
 h2 {
-  font-size: 1.8em;
+  font-size: 1.9em;
   font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   letter-spacing: 1px;
+  background: linear-gradient(90deg, #fff, #ddd, #fff);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleGlow 3s infinite linear;
+}
+
+@keyframes titleGlow {
+  0% {background-position: 0%;}
+  100% {background-position: 200%;}
 }
 
 .boost-btn {
@@ -61,6 +70,7 @@ h2 {
   margin: 12px 0;
   cursor: pointer;
   transition: all 0.4s ease;
+  position: relative;
 }
 
 .boost-btn:hover:not(:disabled) {
@@ -68,6 +78,11 @@ h2 {
   color: #000;
   transform: scale(1.02);
   box-shadow: 0 0 20px rgba(255,255,255,0.2);
+}
+
+.boost-btn.active {
+  box-shadow: 0 0 15px 4px rgba(255,255,255,0.4);
+  border-color: rgba(255,255,255,0.6);
 }
 
 .boost-btn[disabled] {
@@ -106,12 +121,22 @@ input {
   transition: 0.3s;
 }
 
-@keyframes glowEffect {
-  0% {box-shadow: 0 0 5px var(--accent), 0 0 10px rgba(255,255,255,0.2);}
-  50% {box-shadow: 0 0 20px var(--accent), 0 0 30px rgba(255,255,255,0.4);}
-  100% {box-shadow: 0 0 5px var(--accent), 0 0 10px rgba(255,255,255,0.2);}
+.reset-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 15px;
+  transition: all 0.3s ease;
 }
-.glow {animation: glowEffect 1.2s ease-in-out;}
+
+.reset-btn:hover {
+  background: #fff;
+  color: #000;
+}
 </style>
 </head>
 <body>
@@ -119,7 +144,7 @@ input {
 <div class="panel">
   <h2>BoostSync</h2>
   <div id="boostList">
-    <button class="boost-btn" data-boost="2">Starter Boost — 2×</button>
+    <button class="boost-btn" data-boost="2">Discord Boosts — 2×</button>
     <button class="boost-btn" data-boost="5" disabled>Power Boost — 5×</button>
     <button class="boost-btn" data-boost="15" disabled>Ultra Boost — 15×</button>
   </div>
@@ -130,6 +155,7 @@ input {
   </div>
 
   <div class="status" id="statusMsg"></div>
+  <button id="resetBtn" class="reset-btn" style="display:none;">🔁 You’ve completed it — Press here to reset</button>
 </div>
 
 <audio id="bgMusic" loop autoplay>
@@ -141,6 +167,7 @@ const boostButtons = document.querySelectorAll('.boost-btn[data-boost]');
 const inviteSection = document.getElementById('inviteSection');
 const submitBtn = document.getElementById('submitBoost');
 const statusMsg = document.getElementById('statusMsg');
+const resetBtn = document.getElementById('resetBtn');
 
 let selectedBoost = null;
 let claimedBoosts = JSON.parse(localStorage.getItem('claimedBoosts') || '[]');
@@ -148,25 +175,28 @@ let claimedBoosts = JSON.parse(localStorage.getItem('claimedBoosts') || '[]');
 function refreshBoosts() {
   boostButtons.forEach(btn => {
     const val = parseInt(btn.dataset.boost);
+    btn.classList.remove('active');
     if (val === 2) btn.disabled = claimedBoosts.includes(2);
     if (val === 5) btn.disabled = !claimedBoosts.includes(2) || claimedBoosts.includes(5);
     if (val === 15) btn.disabled = !claimedBoosts.includes(5) || claimedBoosts.includes(15);
     if (claimedBoosts.includes(val)) btn.textContent = `✓ Claimed — ${val}×`;
   });
-}
 
-function animateGlow(btn) {
-  btn.classList.add('glow');
-  setTimeout(() => btn.classList.remove('glow'), 1200);
+  if (claimedBoosts.includes(2) && claimedBoosts.includes(5) && claimedBoosts.includes(15)) {
+    statusMsg.textContent = "🎉 You’ve completed all BoostSync levels!";
+    resetBtn.style.display = "inline-block";
+  } else {
+    resetBtn.style.display = "none";
+  }
 }
 
 boostButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     selectedBoost = parseInt(btn.dataset.boost);
-    boostButtons.forEach(b => b.disabled = true);
+    boostButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     inviteSection.style.display = 'block';
-    statusMsg.textContent = `You selected: ${selectedBoost}× boost. Enter your invite code below.`;
-    animateGlow(btn);
+    statusMsg.textContent = `You selected: ${selectedBoost}× Boost. Enter your invite code below.`;
   });
 });
 
@@ -182,10 +212,17 @@ submitBtn.addEventListener('click', () => {
     localStorage.setItem('claimedBoosts', JSON.stringify(claimedBoosts));
   }
 
-  refreshBoosts();
   inviteSection.style.display = 'none';
-  statusMsg.textContent = `✅ BoostSync: ${selectedBoost}× boost claimed successfully.`;
-  boostButtons.forEach(btn => { if (!btn.disabled) animateGlow(btn); });
+  document.getElementById('inviteCode').value = '';
+  statusMsg.textContent = `✅ BoostSync: ${selectedBoost}× boost successfully claimed.`;
+  refreshBoosts();
+});
+
+resetBtn.addEventListener('click', () => {
+  localStorage.removeItem('claimedBoosts');
+  claimedBoosts = [];
+  refreshBoosts();
+  statusMsg.textContent = 'Progress has been reset.';
 });
 
 refreshBoosts();
